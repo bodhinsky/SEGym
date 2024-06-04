@@ -12,6 +12,7 @@ import stat
 import os
 import shutil
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 import xml.etree.ElementTree as ET
 import regex
 from fuzzywuzzy import fuzz
@@ -66,7 +67,71 @@ class Container:
     Container is a wrapper around a Docker container. It is used to run commands in the container and cleans up after itself.
     """
 
+    executor = ThreadPoolExecutor(max_workers=10)
+
     def __init__(self, mount_dir: str):
+        self.mount_dir = os.path.abspath(mount_dir)
+        self.template_container = self._create_template_container()
+        self.container = None
+
+    def _create_template_container(self):
+        logger.debug(f"Creating template container with mount directory {self.mount_dir}")
+        container = DockerConnector.get_instance().client.containers.run(
+            image=config.DOCKER_TAG,
+            detach=True,
+            volumes={self.mount_dir: {"bind": "/repo", "mode": "rw"}},
+            working_dir="/repo",
+            tty=True,
+            name=f"se_gym_template_container_{time.time()}",
+        )
+        container.commit(repository="template_image", tag="latest")
+        container.stop()
+        container.remove()
+        logger.debug(f"Template container created and committed as template_image:latest")
+        return "template_image:latest"
+
+    def init(self):
+        future = self.executor.submit(self.create_container)
+        self.container = future.result()
+        return self
+
+    def create_container(self):
+        container_name = f"se_gym_container_{time.time()}"
+        logger.debug(f"Creating container {container_name} from template")
+        container = DockerConnector.get_instance().client.containers.run(
+            self.template_container,
+            detach=True,
+            volumes={self.mount_dir: {"bind": "/repo", "mode": "rw"}},
+            working_dir="/repo",
+            tty=True,
+            name=container_name
+        )
+        logger.debug(f"Container {container_name} created")
+        return container
+
+    def run_command(self, command: str):
+        future = self.executor.submit(self._run_command, command)
+        return future.result()
+
+    def _run_command(self, command: str):
+        logger.debug(f"Running command {command} in container {self.container.name}")
+        res = self.container.exec_run(cmd=command, stdout=True, stderr=True)
+        logger.debug(
+            f"Command {command} finished with exit code {res.exit_code}, output {res.output}"
+        )
+        return res
+
+    def destroy(self):
+        future = self.executor.submit(self._destroy)
+        return future.result()
+
+    def _destroy(self):
+        logger.debug(f"Destroying container {self.container.name}")
+        self.container.stop()
+        self.container.remove(v=True, force=True)
+        logger.debug(f"Container {self.container.name} destroyed")
+
+    """ def __init__(self, mount_dir: str):
         self.mount_dir = os.path.abspath(mount_dir)
         self.container = DockerConnector.get_instance().client.containers.run(
             image=config.DOCKER_TAG,
@@ -89,7 +154,7 @@ class Container:
         self.container.stop()
         self.container.remove(
             v={self.mount_dir: {"bind": "/repo", "mode": "rw"}}, force=True
-        )
+        ) """
 
 
 class CodeExecutor:
@@ -106,7 +171,7 @@ class CodeExecutor:
         with open(f"{self.temp_dir}/file.patch", "w") as file:
             file.write(patch)
         logger.debug("Starting container")
-        self.container = Container(mount_dir=self.temp_dir)  # start a container
+        self.container = Container(mount_dir=self.temp_dir).init()  # start a container
         logger.debug(f"Container started with mount dir {self.temp_dir}")
 
     def destroy(self):
@@ -151,10 +216,12 @@ def check_patch(code_base_root: str, patch: str):
 
 
 def get_code_span(full_code: str, partial_code: str) -> str:
+    logger.debug(f"Finding code span for {partial_code}")
     pattern = regex.compile(
         "(" + regex.escape(partial_code) + "){i,d,e}",
-        regex.BESTMATCH | regex.IGNORECASE | regex.ENHANCEMATCH,
+        regex.IGNORECASE | regex.ENHANCEMATCH,
     )
+    logger.debug(f"Before searching for full code")
     match = pattern.search(full_code)
     if match is None:
         raise ValueError("Old code not found in the file")
@@ -162,6 +229,7 @@ def get_code_span(full_code: str, partial_code: str) -> str:
         ratio = fuzz.ratio(match.group(), partial_code)
         if ratio < config.FUZZY_MATCH_THRESHOLD:
             raise ValueError(f"Old code not found in the file, fuzzy match {ratio}")
+    logger.debug("Before return")
     return match.span()
 
 
@@ -173,18 +241,23 @@ def generate_patch(code_base_root: str, filename: str, old_code: str, new_code: 
     subprocess.run(config.GIT_DISCARD_CHANGES.split(" "), cwd=code_base_root)
     # find the file to change
     file_path = utils.find_file(code_base_root, filename)
+    logger.debug(f"After find file")
     if file_path.startswith("."):
         file_path = file_path[1:]
     # find the old code in the file
     with open(code_base_root + file_path, "r") as file:
         old_file_content = file.read()
+    logger.debug(f"After finding the old code")
     span = get_code_span(old_file_content, old_code)
     # replace the old code with the new code
+    logger.debug(f"After assigning: {span}")
     new_file_content = (
         old_file_content[: span[0]] + new_code + old_file_content[span[1] :]
     )
+    logger.debug(f"After assigning: {new_file_content}")
     with open(code_base_root + file_path, "w") as file:
         file.write(new_file_content)
+    logger.debug(f"Before running git diff")
     # create a patch file running git diff
     patch = subprocess.run(
         config.GIT_DIFF.split(" "), cwd=code_base_root, stdout=subprocess.PIPE
