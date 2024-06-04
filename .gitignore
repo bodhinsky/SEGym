@@ -12,6 +12,8 @@ old_*
 temp*file.patch
 .cache.*.pkl
 
+wandb/
+
 .aider*
 !.aider.conf.yml
 

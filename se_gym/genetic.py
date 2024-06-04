@@ -178,6 +178,7 @@ class Population:
                     )
         except Exception:
             pass
+        
         while len(new_population) < len(self.individuals):
             new_population.append(random.choice(self.individuals[self.num_elite :]))
         self.individuals = new_population  # update the population

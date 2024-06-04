@@ -36,7 +36,8 @@ def find_file(root_dir: str, filename: str) -> str:
         if not rel_path.startswith("./"):
             rel_path = "./" + rel_path
         return rel_path
-    raise FileNotFoundError(f"File {filename} not found in {root_dir}")
+    logger.error(f"Tried looking for {filename} in {root_dir}")
+    raise FileNotFoundError()
 
 
 def check_client(client):
