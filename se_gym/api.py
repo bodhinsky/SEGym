@@ -35,10 +35,26 @@ __dummy_repo = dict(
     ],
 )
 
+__apicurl = dict(
+    repo = ["bodhinsky/apicurl"],
+    instance_id =  ["1"],
+    base_commit  = ["d281f7f28032db40d42effc18f688bbd698f2af7"],
+    problem_statement = [
+        config.ISSUE_DESC
+    ],
+    environment_setup_commit = ["d281f7f28032db40d42effc18f688bbd698f2af7"],
+    test_patch = ["[]"],
+    FAIL_TO_PASS = [
+        "['test_calculate_artist_release_percentage (test.artistOverview_test.test_calculate_artist_release_percentage)','test_visualize_music_collection (test.artistOverview_test.test_visualize_artist_release_percentage)','test_update_data_model_and_storage (test.artistOverview_test.test_update_data_model_and_storage)','test_enhance_ui_with_visualization_and_enriched_data (test.artistOverview_test.test_enhance_ui_with_artist_release_percentage_visualization)','test_secure_api_communication (test.artistOverview_test.test_secure_api_communication)','test_optimize_performance_for_fetching_processing_visualization (test.artistOverview_test.test_optimize_performance_for_data_processing_and_visualization)']"
+    ],
+)
+
 
 def get_ds(dataset):
     if dataset == "dummy":
         return __dummy_repo
+    if dataset == "apicurl":
+        return __apicurl
     else:
         split = None
         if dataset.endswith("/dev") or dataset.endswith("/test"):
