@@ -10,14 +10,16 @@ importlib.reload(se_gym.api)
 dotenv.load_dotenv("./se_gym/.env")
 
 # Initialize W&B
-wandb.init(project="dummy")
+wandb.init(project="SEGym")
 
 # Configuration
-MAX_TIME_STEPS = 20
+MAX_TIME_STEPS = 10
 wandb.config.max_time_steps = MAX_TIME_STEPS
 wandb.config.iterations = 5
 
-env = se_gym.api.make("apicurl")
+config_name = "apicurl"
+
+env = se_gym.api.make(config_name)
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)s:%(message)s",
@@ -46,27 +48,29 @@ INITIAL_θ = [
     "Code whisperer, attune to this troubled program's essence through the provided snippets and reports. Whisper sacred incantations to realign its energies. Craft careful remedies and intricate tests to validate renewed vigor.",
     "Here's some code that someone else wrote. I don't know anything about the project or the context of this code. But it has a bug, so please fix it.",
     "I don't really understand coding, but I need you to fix this bug. Here's the code snippet and the issue report. Just do whatever you can to make it work.",
-    "Ancient code monk, meditate on this program's snippets and reports to unravel its tangled logic. Craft brushstroke solutions with precision. Guide future generations through enlightening tests."
+    "You are a Senior DevOps Engineer with expertise in Python, Data Science, Machine Learning, and Computer Vision. You are tasked with debugging a critical issue in the application. The bug report and relevant code snippets are provided below. Please review the code, identify the root cause of the issue, and propose a solution to fix the bug.",
 ]
 
 # Define model name and version
 #se_gym.config.MODEL_NAME = "starcoder2:instruct"
-#se_gym.config.MODEL_NAME = "llama3:8b"
-se_gym.config.MODEL_NAME = "gpt-4o"
-wandb.config.model_name = se_gym.config.MODEL_NAME
+se_gym.config.MODEL_NAME = "llama3:70b"
+#se_gym.config.MODEL_NAME = "gpt-4o"
 
 # Add your client here
-#client = se_gym.openai_client.get_lmu_openai_client()
-client = se_gym.openai_client.get_openai_client()
+client = se_gym.openai_client.get_lmu_openai_client()
+#client = se_gym.openai_client.get_openai_client()
 se_gym.client._Client(client)
 
 # Define the sampler
 π = se_gym.Sampler(code_base_root=env.reset().path)
 
-percent_elite = 0.2
-percent_mutation = 0.6
-percent_crossover = 0.2
+percent_elite = 0.3
+percent_mutation = 0.4
+percent_crossover = 0.3
 
+wandb.config.model_name = se_gym.config.MODEL_NAME
+wandb.config.issue = "swelitemarschmallow1"
+wandb.config.population_size = len(INITIAL_θ)
 wandb.config.percent_elite = percent_elite
 wandb.config.percent_mutation = percent_mutation
 wandb.config.percent_crossover = percent_crossover
@@ -80,28 +84,66 @@ population = se_gym.genetic.Population(
     sampler=π,
 )
 
+if config_name == "swelitemarshmallow1":
 # Initialize the observer
-observer = se_gym.observe.Observer(
-    reader=se_gym.observe.read.OracleReader(
-        root_dir="./temp/bodhinskyapicurl",
-        files=[
-            "./temp/bodhinskyapicurl/src/apiCurl/fetchProcessCollection.py",
-            "./temp/bodhinskyapicurl/test/artistOverview_test.py",
-            "./temp/bodhinskyapicurl/test/fetchProcessCollection_test.py",
-            "./temp/bodhinskyapicurl/src/apiCurl/__main__.py",
-            "./temp/bodhinskyapicurl/src/apiCurl/userAuth.py",
-        ],
-    ),
-    selector=se_gym.observe.select.FullSelector(),
-)
+    observer = se_gym.observe.Observer(
+        reader=se_gym.observe.read.OracleReader(
+            root_dir="./temp/marshmallow-codemarshmallow",
+            files=[
+                "./temp/marshmallow-codemarshmallow/src/marshmallow/fields.py",
+                "./temp/marshmallow-codemarshmallow/tests/test_fields.py",
+            ],
+        ),
+        selector=se_gym.observe.select.FullSelector(),
+    )
+if config_name == "swelitepylint1":
+    # Initialize the observer
+    observer = se_gym.observe.Observer(
+        reader=se_gym.observe.read.OracleReader(
+            root_dir="./temp/pylint-devastroid",
+            files=[
+                "./temp/pylint-devastroid/astroid/raw_building.py",
+                "./temp/pylint-devastroid/tests/unittest_raw_building.py",
+            ],
+        ),
+        selector=se_gym.observe.select.FullSelector(),
+    )
+if config_name == "apicurl":
+# Initialize the observer
+    observer = se_gym.observe.Observer(
+        reader=se_gym.observe.read.OracleReader(
+            root_dir="./temp/bodhinskyapicurl",
+            files=[
+                "./temp/bodhinskyapicurl/apicurl/fetch_process_collection.py",
+                "./temp/bodhinskyapicurl/test/artist_overview_test.py",
+                "./temp/bodhinskyapicurl/test/fetch_process_collection_test.py",
+            ],
+        ),
+        selector=se_gym.observe.select.FullSelector(),
+    )
+if config_name == "dummy":
+    # Initialize the observer
+    observer = se_gym.observe.Observer(
+        reader=se_gym.observe.read.OracleReader(
+            root_dir="./temp/gstenzelignore-this-dummy",
+            files=[
+                "./temp/gstenzelignore-this-dummy/magic/main.py",
+                "./temp/gstenzelignore-this-dummy/magic/test/test_main.py",
+            ],
+        ),
+        selector=se_gym.observe.select.FullSelector(),
+    )
 
-R = se_gym.fitness.num_failed_tests
+R = se_gym.fitness.percent_successfull
 
 for iteration in range(wandb.config.iterations):
     r = 0
+    # Return path, issue and fail to pass from repo
     s_t = env.reset()
     for t in range(wandb.config.max_time_steps):
+        # Returns compressor: issue, documents and logs
         o_t = observer(s_t)  # observation at time t
+        # 
         a_t = population.sample(o_t)  # actions at time t
         s_t = env.step(a_t)  # apply actions at time t to get next state
         current_r = [R(s_) for s_ in s_t]
@@ -109,11 +151,18 @@ for iteration in range(wandb.config.iterations):
         print(f"Current reward: {current_r}")
 
         # Log current reward and additional population data to W&B
+
+        for i, r in enumerate(current_r):
+            wandb.log({f"reward ind {i+1}": r})
+
+        if len(current_r)!=0:
+            wandb.log({"average_fitness": sum(current_r) / len(current_r)})
+
         wandb.log({
-            "reward": sum(current_r),
-            "population_size": len(population.individuals),
+            "current_reward": current_r,
+            "sum_reward": sum(current_r),
+            "step": t,
             "iteration": iteration,
-            "average_fitness": sum(current_r) / len(current_r),
             "elite_individuals": [ind for ind in population.individuals[:population.num_elite]]
         })
 
