@@ -53,12 +53,12 @@ INITIAL_θ = [
 
 # Define model name and version
 #se_gym.config.MODEL_NAME = "starcoder2:instruct"
-se_gym.config.MODEL_NAME = "llama3:70b"
-#se_gym.config.MODEL_NAME = "gpt-4o"
+#se_gym.config.MODEL_NAME = "llama3:70b"
+se_gym.config.MODEL_NAME = "gpt-3.5-turbo"
 
 # Add your client here
-client = se_gym.openai_client.get_lmu_openai_client()
-#client = se_gym.openai_client.get_openai_client()
+#client = se_gym.openai_client.get_lmu_openai_client()
+client = se_gym.openai_client.get_openai_client()
 se_gym.client._Client(client)
 
 # Define the sampler
@@ -69,7 +69,7 @@ percent_mutation = 0.4
 percent_crossover = 0.3
 
 wandb.config.model_name = se_gym.config.MODEL_NAME
-wandb.config.issue = "swelitemarschmallow1"
+wandb.config.issue = config_name
 wandb.config.population_size = len(INITIAL_θ)
 wandb.config.percent_elite = percent_elite
 wandb.config.percent_mutation = percent_mutation
