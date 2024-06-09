@@ -43,14 +43,14 @@ __dummy_repo = dict(
 __apicurl = dict(
     repo = ["bodhinsky/apicurl"],
     instance_id =  ["1"],
-    base_commit  = ["bccf189d66bf0ed576ac869926848a0ca5ba9d03"],
+    base_commit  = ["b65489e8f75a1b2a21b6fc1a3c53ddef144e0940"],
     problem_statement = [
-        "We want to calculate percentage of releases owned per artist and Implement data visualization for artist release percentage. We already proposed some tests"
+        "The tests are failing, because we want to calculate percentage of releases owned per artist and Implement data visualization for artist release percentage. We already proposed some tests, so we need to implement according to them"
     ],
-    environment_setup_commit = ["bccf189d66bf0ed576ac869926848a0ca5ba9d03"],
+    environment_setup_commit = ["b65489e8f75a1b2a21b6fc1a3c53ddef144e0940"],
     test_patch = ["[]"],
     FAIL_TO_PASS = [
-        "['test_calculate_artist_release_percentage (test.artist_overview_test.test_calculate_artist_release_percentage)','test_visualize_music_collection (test.artist_overview_test.test_visualize_artist_release_percentage)','test_update_data_model_and_storage (test.artist_overview_test.test_update_data_model_and_storage)','test_enhance_ui_with_visualization_and_enriched_data (test.artist_overview_test.test_enhance_ui_with_artist_release_percentage_visualization)','test_secure_api_communication (test.artist_overview_test.test_secure_api_communication)','test_optimize_performance_for_fetching_processing_visualization (test.artist_overview_test.test_optimize_performance_for_data_processing_and_visualization)']"
+        "['test_calculate_artist_release_percentage (test.fetch_process_collection_test.test_calculate_artist_release_percentage)','test_visualize_music_collection (test.fetch_process_collection_test.test_visualize_artist_release_percentage)','test_update_data_model_and_storage (test.fetch_process_collection_test.test_update_data_model_and_storage)','test_enhance_ui_with_visualization_and_enriched_data (test.fetch_process_collection_test.test_enhance_ui_with_artist_release_percentage_visualization)','test_secure_api_communication (test.fetch_process_collection_test.test_secure_api_communication)','test_optimize_performance_for_fetching_processing_visualization (test.fetch_process_collection_test.test_optimize_performance_for_data_processing_and_visualization)']"
     ],
 )
 

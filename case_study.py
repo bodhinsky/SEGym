@@ -13,9 +13,9 @@ dotenv.load_dotenv("./se_gym/.env")
 wandb.init(project="SEGym")
 
 # Configuration
-MAX_TIME_STEPS = 10
+MAX_TIME_STEPS = 5
 wandb.config.max_time_steps = MAX_TIME_STEPS
-wandb.config.iterations = 5
+wandb.config.iterations = 3
 
 config_name = "apicurl"
 
@@ -52,20 +52,20 @@ INITIAL_θ = [
 ]
 
 # Define model name and version
-#se_gym.config.MODEL_NAME = "starcoder2:instruct"
-#se_gym.config.MODEL_NAME = "llama3:70b"
-se_gym.config.MODEL_NAME = "gpt-3.5-turbo"
+se_gym.config.MODEL_NAME = "codeqwen:7b"
+#se_gym.config.MODEL_NAME = "dolphin-mixtral:latest"
+#se_gym.config.MODEL_NAME = "gpt-4o"
 
 # Add your client here
-#client = se_gym.openai_client.get_lmu_openai_client()
-client = se_gym.openai_client.get_openai_client()
+client = se_gym.openai_client.get_lmu_openai_client()
+#client = se_gym.openai_client.get_openai_client()
 se_gym.client._Client(client)
 
 # Define the sampler
 π = se_gym.Sampler(code_base_root=env.reset().path)
 
-percent_elite = 0.3
-percent_mutation = 0.4
+percent_elite = 0.4
+percent_mutation = 0.3
 percent_crossover = 0.3
 
 wandb.config.model_name = se_gym.config.MODEL_NAME
@@ -115,7 +115,6 @@ if config_name == "apicurl":
             root_dir="./temp/bodhinskyapicurl",
             files=[
                 "./temp/bodhinskyapicurl/apicurl/fetch_process_collection.py",
-                "./temp/bodhinskyapicurl/test/artist_overview_test.py",
                 "./temp/bodhinskyapicurl/test/fetch_process_collection_test.py",
             ],
         ),
