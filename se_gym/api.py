@@ -84,14 +84,10 @@ __swelitepylint1 = dict(
 
 def get_ds(dataset):
     if dataset == "dummy":
-        return __dummy_repo
-    if dataset == "apicurl":
-        return __apicurl
-    if dataset == "swelitemarshmallow1":
-        return __swelitemarshmallow1
-    if dataset == "swelitepylint1":
-        return __swelitepylint1
+        import json
 
+        with open("./dummy_dataset.json", "r") as f:
+            return json.load(f)
     else:
         split = None
         if dataset.endswith("/dev") or dataset.endswith("/test"):
