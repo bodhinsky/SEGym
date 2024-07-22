@@ -90,7 +90,7 @@ class Sampler:
                 response_model=self.output_class,
                 response_format={ "type": "json_object" },
                 field_name="patch_file",
-                temperature=0
+                model=config.MODEL_NAME,
             )
             logger.debug(f"API call took {time.time() - start_time} seconds")
             return resp
