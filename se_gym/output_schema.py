@@ -75,12 +75,14 @@ Embed good patch files in a JSON object with the key "patch_file".\n
         )
         if not patch_str.startswith("diff --git a/"):
             logger.debug(f"Invalid patch file {patch_str}")
+            
             raise ValueError("Patch file must start with 'diff --git a/'")
         if cls.code_base_root is not None:
             try:
                 runner.check_patch(cls.code_base_root, patch_str)
             except Exception as e:
                 logger.debug(f"Invalid patch file {patch_str} error {e}")
+
                 raise e
         else:
             logger.debug("No code base root provided, skipping patch validation")
@@ -99,29 +101,31 @@ class ChangePatchOutput(OutputSchema):
     )
 
     prompt: typing.ClassVar[str] = """
-The output should be formatted as a JSON instance that conforms to the JSON schema below.
+CRITICAL INSTRUCTION: Your entire response must be a single, valid JSON object. Do not include ANY text before or after the JSON. 
+
+JSON SCHEMA:
 {
-    'filename': The filename of the file to be changed. Use the exact filename that was provided to you. Do not modify it. If you are modifying multiple files, only list one file here. You will be able to modify multiple files in the next step.
-    'old_code': This is the original code provided above. Do not modify it, just paste the part you want to replace.
-    'new_code': This code will replace the original code. 
+    "filename": "string",
+    "old_code": "string",
+    "new_code": "string"
 }
 
-Make sure you use the proper filename. Do not filenames like `/home/user/scratch/`, but always use the exact filename that you see in the prompt. Do not modify the filename. 
-The `/scratch` directory does not exist, use the known directories and files.
+RULES:
+1. Output ONLY the JSON object. No other text is allowed.
+2. "filename": Exact name from the problem, unmodified.
+3. "old_code": Only the specific code segment to replace.
+4. "new_code": Code that replaces old_code. Maintain structure.
+5. Make one change per JSON object.
+6. Use double quotes for JSON strings.
+7. Ensure valid JSON formatting.
 
-EXAMPLE: If you want to replace the code in the file `./src/main.py` from `Hello, World!` to `Hello, new World!`, the JSON object should look like this:
+EXAMPLE OF VALID RESPONSE:
+{"filename":"main.py","old_code":"def greet():\n    print(\"Hello, World!\")","new_code":"def greet():\n    print(\"Hello, AI!\")"}
 
-{
-    'filename': './src/main.py',
-    'old_code': '\nif __name__ == "__main__":\n    print("Hello, World!")\n',
-    'new_code': '\nif __name__ == "__main__":\n    print("Hello, new World!")\n'
-}
-
-Only reply using this exact JSON format. Do not include anything else in your response.
-Only include one change in your response. If you need to make multiple changes, you will be able to do so in the next step.
-Your answer must be in JSON format. Make sure to include the keys "filename", "old_code", and "new_code". Refrence filenames exactly as they are provided to you. Only use the "filename", "old_code", and "new_code" keys.
-REPLACE ONLY THE CODE THAT NEEDS TO BE CHANGED, NOT THE ENTIRE FILE. WRAP THE NEW CODE IN THE SAME FUNCTION OR CLASS AS THE OLD CODE.
-
+REMEMBER: 
+- ONLY output the JSON object.
+- NO explanations, comments, or additional text.
+- If you can't form a valid JSON response, output only an empty JSON object: {}
 """
 
     @pydantic.root_validator(pre=True)

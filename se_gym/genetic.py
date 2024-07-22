@@ -6,7 +6,6 @@ import typing
 import pydantic
 import random
 import logging
-import wandb
 from . import config
 from . import client
 
@@ -151,7 +150,6 @@ class Population:
             response_model=Children,
             field_name=["child1", "child2"],
         )
-        wandb.log({"crossover": {resp}})
         return resp
 
     def _selection(
@@ -211,11 +209,9 @@ class Population:
             else:
                 obs = observation
             try:
-                wandb.log({"sample_ind": ind})
                 actions.append(self.sampler(system_prompt=ind, context=obs))
             except Exception:
                 actions.append("")
-                wandb.log({"failed_sample": ind})
                 logger.warning(f"Failed to sample {ind}. ", exc_info=True)
         return actions
 

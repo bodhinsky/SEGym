@@ -31,27 +31,19 @@ class Observer:
         return self.compressor(full)
 
     def _get_issue(self, state: api.State):
-        return f"""\n\n
-=========================
+        return f"""\n
 <ISSUE DESCRIPTION>
-=========================
 \n{state.issue}\n
-=========================
 </ISSUE DESCRIPTION>
-=========================
 """
 
     def _get_logs(self, state: api.State):
         if not state.logs:
             return ""
-        return f"""\n\n
-=========================
+        return f"""\n
 <LOGS>
-=========================
 \n{state.logs}\n
-=========================
 </LOGS>
-=========================
     """
 
     def from_env(self, env):

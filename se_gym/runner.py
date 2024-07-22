@@ -199,6 +199,8 @@ def check_patch(code_base_root: str, patch: str):
         code_base_root (str): The root directory of the codebase.
         patch (str): The patch to apply to the codebase. This file might be corrupted, in which case the function will raise an MalformedPatchException.
     """
+    if (code_base_root.endswith(".")):
+        code_base_root = code_base_root[:-1]
     with open(f"{code_base_root}/file.patch", "w") as file:
         file.write(patch)
     rand_path = f"./temp{str(time.time())}_file.patch"
@@ -243,8 +245,13 @@ def generate_patch(code_base_root: str, filename: str, old_code: str, new_code: 
     # find the file to change
     file_path = utils.find_file(code_base_root, filename)
     logger.debug(f"After find file")
+    logger.debug(f"File Path: {file_path}")
+    logger.debug(f"Code Base Root: {code_base_root}")
+    logger.debug(f"File Name: {filename}")
     if file_path.startswith("."):
         file_path = file_path[1:]
+    if (code_base_root.endswith(".")):
+        code_base_root = code_base_root[:-1]
     # find the old code in the file
     with open(code_base_root + file_path, "r") as file:
         old_file_content = file.read()

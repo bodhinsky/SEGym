@@ -2,6 +2,7 @@ import openai
 import httpx
 import os
 import dotenv
+import anthropic
 
 def get_lmu_openai_client():
     """
@@ -37,3 +38,28 @@ def get_openai_client():
 
     openai.api_key = api_key
     return openai
+
+def get_groq_client():
+    """
+    Returns the Groq API client object.
+    
+    Parameters:
+
+    Returns:
+        openai.Client: The OpenAI API client object, with adapted base_url.
+    """
+    dotenv.load_dotenv()
+    api_key = os.getenv("GROQ_API_KEY")
+
+    client = openai.OpenAI(
+        base_url="https://api.groq.com/openai/v1", api_key=api_key
+    )
+    return client
+
+def get_anthropic_client():
+    dotenv.load_dotenv()
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    client = anthropic.Anthropic(
+        # defaults to os.environ.get("ANTHROPIC_API_KEY")
+        api_key=api_key
+    )

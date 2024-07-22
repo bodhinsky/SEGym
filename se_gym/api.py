@@ -6,6 +6,7 @@ import typing
 import subprocess
 import logging
 import regex as re
+import wandb
 
 from . import utils
 from . import config
@@ -87,6 +88,11 @@ def get_ds(dataset):
         import json
 
         with open("./dummy_dataset.json", "r") as f:
+            return json.load(f)
+    if dataset == "apicurl":
+        import json
+
+        with open("./apicurl.json", "r") as f:
             return json.load(f)
     else:
         split = None
@@ -191,6 +197,9 @@ class Environment:
             return [self.step(a) for a in action]
         if not action:  # Sampler has produced invalid patch
             logger.info("Invalid patch, skipping")
+            logger.info(f"Invalid patch: {action}")
+            wandb.log({"Invalid patch": action})
+            wandb.log({"valid_patch": False})
             return InvalidState(
                 path=self.current_path,
                 issue=self.current_issue,
