@@ -5,7 +5,6 @@ from inspect import signature
 import glob
 import os
 import openai
-import tiktoken
 import pandas as pd
 import pathlib
 import warnings
@@ -119,8 +118,3 @@ def cached(ignore=None):
         return wrapper
 
     return decorator
-
-def num_tokens_from_string(string: str) -> int:
-    encoding = tiktoken.get_encoding("cl100k_base")
-    num_tokens = len(encoding.encode(string))
-    return num_tokens

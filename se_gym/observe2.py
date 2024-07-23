@@ -1,5 +1,5 @@
 from haystack.document_stores.in_memory import InMemoryDocumentStore
-from haystack.components.retrievers import InMemoryEmbeddingRetriever, InMemoryBM25Retriever
+from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever, InMemoryBM25Retriever
 from haystack.components.converters.txt import TextFileToDocument
 import haystack
 import typing

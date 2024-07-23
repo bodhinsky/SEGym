@@ -72,8 +72,6 @@ class Sampler:
         to log the invalid responses
         """
         system_prompt_instruct = system_prompt + self.output_class.get_prompt()
-        wandb.log({"system_prompt_t_length": utils.num_tokens_from_string(system_prompt)})
-        wandb.log({"user_context_t_length": utils.num_tokens_from_string(context)})
         context = context + "\n'''json\n"
         messages = [
             {"role": "system", "content": system_prompt_instruct},

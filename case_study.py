@@ -54,8 +54,8 @@ INITIAL_θ = [
 
 # Define model name and version
 #se_gym.config.MODEL_NAME = "starcoder:15b"
-se_gym.config.MODEL_NAME = "codellama:7b"
-se_gym.config.EVO_MODEL_NAME = "llama3:8b"
+se_gym.config.MODEL_NAME = "codeqwen:7b"
+se_gym.config.EVO_MODEL_NAME = "llama3:latest"
 #se_gym.config.MODEL_NAME = "gpt-4o-mini"
 #se_gym.config.EVO_MODEL_NAME = "gpt-4o-mini"
 #se_gym.config.MODEL_NAME = "mixtral-8x7b-32768"
@@ -63,11 +63,11 @@ se_gym.config.EVO_MODEL_NAME = "llama3:8b"
 #se_gym.config.MODEL_NAME = "claude-3-sonnet-20240229"
 
 # Add your client here
-client = se_gym.openai_client.get_lmu_openai_client()
+client = se_gym.openai_lmu.get_lmu_openai_client()
 #client = se_gym.openai_client.get_openai_client()
 #client = se_gym.openai_client.get_groq_client()
 #client = se_gym.openai_client.get_anthropic_client()
-se_gym.client._Client(client)
+se_gym.client.set_client(client)
 percent_elite = 0.3
 percent_mutation = 0.3
 percent_crossover = 0.3
@@ -81,6 +81,9 @@ wandb.config.population_size = len(INITIAL_θ)
 wandb.config.percent_elite = percent_elite
 wandb.config.percent_mutation = percent_mutation
 wandb.config.percent_crossover = percent_crossover
+
+parquet_path = f"data.{int(time.time())}.parquet"
+print(f"Data will be stored in {parquet_path}")
 
 # Initialize the population
 population = se_gym.genetic.Population(
@@ -97,12 +100,18 @@ observer = se_gym.observe.Observer(
     selector=se_gym.observe.select.BM25Selector(),
 )
 
+## Another possible observer
+# observer = se_gym.observe.Observer(
+#     reader=se_gym.observe.read.OracleReader,
+#     selector=se_gym.observe.select.FullSelector(),
+# )
+
 all_logs = []
 
 R = se_gym.fitness.percent_successfull
-start_time = time.time()
 for epoch in range(wandb.config.epochs):
     print(f"Epoch {epoch}")
+    epoch_loss = []
     for issue in range(num_issues):
         print(f"\tIssue {issue}")
         wandb.log({
@@ -127,13 +136,25 @@ for epoch in range(wandb.config.epochs):
             r_ind = []  # Reward for the individual
             for timestep in range(MAX_TIME_STEPS):
                 wandb.log({"valid_patch": True})
-                step_start_time = time.time() # Start timing the step
                 print(f"\t\t\tTimestep {timestep}")
                 observer.clear_cache()
                 o_t = observer(s_t)  # Observe the state
+                starttime = time.time()
                 a_t = population.get_action(individual, o_t)  # Get the action
                 s_t = env.step(a_t)  # Take the action
                 r_ind_t = R(s_t)  # Reward for the timestep
+                se_gym.utils.log_to_parqet(
+                    log_filename=parquet_path,
+                    model=se_gym.config.MODEL_NAME,
+                    epoch=epoch,
+                    individual_i=population.individuals.index(individual),
+                    individual=individual,
+                    issue=issue,
+                    timestep=timestep,
+                    patch=a_t,
+                    score=r_ind_t,
+                    time=time.time() - starttime,
+                )
                 r_ind.append(r_ind_t)
                 wandb.log({
                     "step": timestep,
@@ -149,18 +170,14 @@ for epoch in range(wandb.config.epochs):
                     "step": timestep,
                     "score": r_ind_t,
                     "patch": a_t,
-                    "step_duration": time.time() - step_start_time
                 }
                 individual_log["steps"].append(step_log)
                 all_logs.append(step_log)  # Add to the main log list
 
                 if r_ind_t == 1:  # If the reward is 1, the issue is fixed
                     print(f"\t\t\t\tIssue fixed in {timestep} timesteps")
-                    step_duration = time.time() - step_start_time
-                    wandb.log({"issue_fixed": True, "step_duration": step_duration})
+                    wandb.log({"issue_fixed": True})
                     break
-                step_duration = time.time() - step_start_time
-                wandb.log({"step_duration": step_duration})
             else:
                 print(f"\t\t\tIssue not fixed in {timestep} timesteps")
                 wandb.log({"issue_fixed": False})
@@ -169,14 +186,18 @@ for epoch in range(wandb.config.epochs):
             })
             wandb.log(individual_log, commit=False)
             r_pop.append(r_ind)
+        epoch_loss.append(r_pop)
         # Evolve the population based on the rewards
-        population.evolve(r_pop)
 
         df = pd.DataFrame(all_logs)
         csv_file = f"evolution_logs_{epoch}_{issue}.csv"
         
         # Commit logs after processing all individuals for the current issue
         wandb.log({"epoch": epoch, "issue": issue}, commit=True)
+    
+    # change epoch_loss from [epoch, individual, timestep] to [individual, epoch, timestep]
+    epoch_loss = list(map(list, zip(*epoch_loss)))
+    population.evolve(epoch_loss)
     df = pd.DataFrame(all_logs)
     csv_file = f"evolution_logs_{epoch}.csv"
     df.to_csv(csv_file, index=False)
