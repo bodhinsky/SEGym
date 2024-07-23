@@ -1,3 +1,4 @@
+import os
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever, InMemoryBM25Retriever
 from haystack.components.converters.txt import TextFileToDocument
@@ -7,8 +8,19 @@ from pathlib import Path
 import logging
 import ast
 from . import utils
+from . import config
 
 logger = logging.getLogger("store")
+
+__all__ = ["Store"]
+
+
+def file_path_formatter(p: str) -> str:
+    p = utils.relpath(p)
+    p = os.path.normpath(p)
+    p = str(p)
+    p = p.replace("\\", "/")
+    return p
 
 
 @haystack.component
@@ -22,7 +34,7 @@ class PyFileToDocument:
         for source in sources:
             with open(source, "r") as f:
                 text = f.read()
-            text = f"# {source}\n```python\n{text}\n```"
+            text = f"# {file_path_formatter(source)}\n```python\n{text}\n```"
             doc = haystack.Document(content=text, meta={"name": source})
             documents.append(doc)
         return {"documents": documents}
@@ -157,7 +169,7 @@ class PyASTToDocument:
             text = "\n".join(lines[start_lineno:end_lineno])
             node_name = node.name if hasattr(node, "name") else ""
             node_name = f"{filename} - {node_name}"
-            text = f"# {filename}\n" + f"```python\n{text}\n```"
+            text = f"# {file_path_formatter(filename)}\n" + f"```python\n{text}\n```"
             return haystack.Document(
                 content=text,
                 meta={"name": node_name, "start_lineno": start_lineno, "end_lineno": end_lineno},
@@ -179,6 +191,45 @@ class PyASTToDocument:
         return docs
 
 
+@haystack.component
+class OracleRetriever:
+    def __init__(self, document_store: InMemoryDocumentStore, **kwargs):
+        self.document_store = document_store
+        self._oracle_files = []
+        if kwargs:
+            logger.warning(f"OracleRetriever received unknown kwargs: {kwargs}")
+
+    @haystack.component.output_types(documents=typing.List[haystack.Document])
+    def run(self, query: str):
+        if not self._oracle_files:
+            raise ValueError("Oracle files not set")
+        all_docs = self.document_store.filter_documents()
+        docs = []
+        for doc in all_docs:
+            if "file_path" in doc.meta:
+                fp = doc.meta["file_path"]
+                fp = os.path.normpath(fp)
+                if fp in self._oracle_files:
+                    docs.append(doc)
+        return {"documents": docs}
+
+    def set_oracle_files(self, files: typing.List[str]):
+        self._oracle_files = [os.path.normpath(f) for f in files]
+
+
+@haystack.component
+class FullCodeRetriever:
+    def __init__(self, document_store: InMemoryDocumentStore, **kwargs):
+        self.document_store = document_store
+        if kwargs:
+            logger.warning(f"FullCodeRetriever received unknown kwargs: {kwargs}")
+
+    @haystack.component.output_types(documents=typing.List[haystack.Document])
+    def run(self, query: str):
+        all_docs = self.document_store.filter_documents()
+        return {"documents": all_docs}
+
+
 class Store:
     def __init__(
         self,
@@ -188,40 +239,32 @@ class Store:
         self.document_store = InMemoryDocumentStore(
             embedding_similarity_function="dot_product", bm25_tokenization_regex=r"\b\w\w+\b"
         )
-        # self.document_writer = DocumentWriter(
-        #     document_store=self.document_store, policy="overwrite"
-        # )
 
         self.path = None
-        # self.query_pipeline = haystack.Pipeline()
 
         if converter == "txt":
             self.converter = TextFileToDocument()
-            # self.query_pipeline.add_component(self.converter)
         elif converter == "skeleton":
             self.converter = PyASTToDocument(kind="skeleton")
-            # self.query_pipeline.add_component(self.converter)
         elif converter == "ast":
             self.converter = PyASTToDocument(kind="full")
-            # self.query_pipeline.add_component(self.converter)
         elif converter == "py":
             self.converter = PyFileToDocument()
-            # self.query_pipeline.add_component(self.converter)
         else:
             raise NotImplementedError(f"Converter {converter} not implemented")
 
         if retriever == "bm25":
-            self.retriever = InMemoryBM25Retriever(document_store=self.document_store, top_k=4)
-            # self.query_pipeline.add_component(self.retriever)
-            # self.document_embedder = None
+            self.retriever = InMemoryBM25Retriever(
+                document_store=self.document_store, top_k=config.RAG_TOP_N
+            )
         elif retriever == "embedding":
-            self.retriever = InMemoryEmbeddingRetriever(document_store=self.document_store, top_k=4)
-            # self.document_embedder = SentenceTransformersDocumentEmbedder()
-            # self.document_embedder.warm_up()
-
-            # self.query_pipeline.add_component("text_embedder", SentenceTransformersTextEmbedder())
-            # self.query_pipeline.add_component(self.retriever)
-            # self.query_pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
+            self.retriever = InMemoryEmbeddingRetriever(
+                document_store=self.document_store, top_k=config.RAG_TOP_N
+            )
+        elif retriever == "oracle":
+            self.retriever = OracleRetriever(document_store=self.document_store)
+        elif retriever == "full":
+            self.retriever = FullCodeRetriever(document_store=self.document_store)
         else:
             raise NotImplementedError(f"Retriever {retriever} not implemented")
 
@@ -229,9 +272,8 @@ class Store:
         logger.info(f"Updating store with path {path}")
         if self.path is not None:
             # TODO: add a check to see which files have been added or removed and update only those
-            # self.document_store.delete_documents()
             pass
         self.path = utils.str2path(path)
         files = list(self.path.rglob("*.py"))
         docs = self.converter.run(sources=files)["documents"]
-        self.document_store.write_documents(docs)
+        self.document_store.write_documents(docs, policy="overwrite")

@@ -9,7 +9,6 @@ import openai
 import logging
 import tenacity
 import time
-import wandb
 
 from . import output_schema
 from . import config
@@ -72,13 +71,11 @@ class Sampler:
         to log the invalid responses
         """
         system_prompt_instruct = system_prompt + self.output_class.get_prompt()
-        context = context + "\n'''json\n"
         messages = [
             {"role": "system", "content": system_prompt_instruct},
             {"role": "user", "content": context},
         ]
         start_time = time.time()
-        logger.debug(f"output_class: {self.output_class}")
         logger.debug(
             f"Calling LLM with message {messages} and model {config.MODEL_NAME}"
         )
@@ -86,7 +83,6 @@ class Sampler:
             resp = client._Client.completions_create(
                 messages=messages,
                 response_model=self.output_class,
-                response_format={ "type": "json_object" },
                 field_name="patch_file",
                 model=config.MODEL_NAME,
             )
