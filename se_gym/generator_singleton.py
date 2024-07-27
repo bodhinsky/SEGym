@@ -37,7 +37,8 @@ def set_generator(generator):
 
 
 def get_generator():
-    return copy.copy(_Generator._instance)
+    assert _Generator._initialized, "Generator has to be initialized"
+    return copy.deepcopy(_Generator._instance)
 
 
 def LMU_get_ollama_generator(model=None, use_chat=False):
