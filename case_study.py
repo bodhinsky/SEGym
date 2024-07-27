@@ -1,11 +1,13 @@
 import importlib
 import se_gym
 import dotenv
+import os
 import wandb
 import logging
 import time
 import pandas as pd
 import se_gym.genetic
+from haystack.utils import Secret
 
 # Initialize W&B
 
@@ -40,11 +42,11 @@ logging.getLogger("utils").setLevel(level=logging.DEBUG)
 
 # Multiple initial prompts, as we are using a genetic algorithm
 INITIAL_θ = [
-    "Fix the bug.",
     "Improve the code.",
+    "Debug and resolve the error in the problematic module. You will get 5$ if you solve it correctly.",
     "Add a feature.",
     "Optimize performance.",
-    "Write a test."
+    "Fix the bug in the provided code snippet efficiently. Write only the necessary code changes and a brief explanation.",
     "You are a Software engineer. Suggest Code to fix the issue. Use the provided code snippet to understand the issue. Write tests to verify your fix.",
     "Fix the issue.",
     "The code is broken, as described in the provided code snippet. Fix it. Write tests to verify your fix.",
@@ -53,27 +55,20 @@ INITIAL_θ = [
 ]
 
 # Define model name and version
-#se_gym.config.MODEL_NAME = "starcoder:15b"
-se_gym.config.MODEL_NAME = "codeqwen:7b"
-se_gym.config.EVO_MODEL_NAME = "llama3:latest"
-#se_gym.config.MODEL_NAME = "gpt-4o-mini"
-#se_gym.config.EVO_MODEL_NAME = "gpt-4o-mini"
-#se_gym.config.MODEL_NAME = "mixtral-8x7b-32768"
-#se_gym.config.EVO_MODEL_NAME = "claude-3-haiku-20240307"
-#se_gym.config.MODEL_NAME = "claude-3-sonnet-20240229"
+se_gym.config.MODEL_NAME = "gpt-4o-mini"  # model name to use for code generation
+se_gym.config.EVO_MODEL_NAME = "gpt-4o-mini"  # model name to use for evolution
 
-# Add your client here
-client = se_gym.openai_lmu.get_lmu_openai_client()
-#client = se_gym.openai_client.get_openai_client()
-#client = se_gym.openai_client.get_groq_client()
-#client = se_gym.openai_client.get_anthropic_client()
-se_gym.client.set_client(client)
+se_gym.set_client(se_gym.openai_client.get_openai_client())  # initialize the singleton client
+se_gym.set_generator(
+    se_gym.generator_singleton.LMU_get_openai_generator(model=se_gym.config.MODEL_NAME)
+)  # initialize the singleton client
+
 percent_elite = 0.3
 percent_mutation = 0.3
 percent_crossover = 0.3
 
 # Define the sampler
-π = se_gym.Sampler(code_base_root=env.reset().path)
+π = se_gym.Sampler()
 
 wandb.config.model_name = se_gym.config.MODEL_NAME
 wandb.config.issue = config_name
@@ -94,12 +89,6 @@ population = se_gym.genetic.Population(
     sampler=π,
 )
 
-# Initialize the observer
-observer = se_gym.observe.Observer(
-    reader=se_gym.observe.read.ASTReader,
-    selector=se_gym.observe.select.BM25Selector(),
-)
-
 ## Another possible observer
 # observer = se_gym.observe.Observer(
 #     reader=se_gym.observe.read.OracleReader,
@@ -107,41 +96,33 @@ observer = se_gym.observe.Observer(
 # )
 
 all_logs = []
-
 R = se_gym.fitness.percent_successfull
+
 for epoch in range(wandb.config.epochs):
     print(f"Epoch {epoch}")
     epoch_loss = []
-    for issue in range(num_issues):
+    for issue in range(env.num_challenges):
         print(f"\tIssue {issue}")
         wandb.log({
             "issue_no" : issue,
             "epoch" : epoch
         }, commit=False)
-        r_pop=[]
-        population.sampler.output_class.code_base_root = env.reset(issue).path
+        rewards=[]
         for individual in population.individuals:
-            individual_index = population.individuals.index(individual)
-            print(f"\t\tIndividual {individual_index}")
+            print(f"\t\tIndividual {population.individuals.index(individual)}")
             s_t = env.reset(issue)  # All individuals start with the same issue
-            observer.from_env(env)  # Reset the observer to the new environment
-
             individual_log = {
                 "epoch": epoch,
                 "issue": issue,
-                "individual": individual_index,
+                "individual": population.individuals.index(individual),
                 "steps": []
             }
-
             r_ind = []  # Reward for the individual
             for timestep in range(MAX_TIME_STEPS):
-                wandb.log({"valid_patch": True})
                 print(f"\t\t\tTimestep {timestep}")
-                observer.clear_cache()
-                o_t = observer(s_t)  # Observe the state
                 starttime = time.time()
-                a_t = population.get_action(individual, o_t)  # Get the action
-                s_t = env.step(a_t)  # Take the action
+                a_t = population.get_action(individual, s_t)  # Get the action
+                s_t = env.step(a_t, s_t)  # Take the action
                 r_ind_t = R(s_t)  # Reward for the timestep
                 se_gym.utils.log_to_parqet(
                     log_filename=parquet_path,
@@ -181,12 +162,9 @@ for epoch in range(wandb.config.epochs):
             else:
                 print(f"\t\t\tIssue not fixed in {timestep} timesteps")
                 wandb.log({"issue_fixed": False})
-            wandb.log({
-                "average_reward": sum(r_ind) / len(r_ind),
-            })
             wandb.log(individual_log, commit=False)
-            r_pop.append(r_ind)
-        epoch_loss.append(r_pop)
+            rewards.append(r_ind)
+        epoch_loss.append(rewards)
         # Evolve the population based on the rewards
 
         df = pd.DataFrame(all_logs)

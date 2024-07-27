@@ -9,6 +9,7 @@ from .generator_singleton import set_generator
 from . import genetic
 from . import config
 from . import observe
+from . import openai_client
 from . import output_validator
 from . import runner_docker
 from . import runner_host
