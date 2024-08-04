@@ -19,18 +19,6 @@ class _Generator:
             _Generator._initialized = True
             _Generator._instance = generator
 
-    def __deepcopy__(self, memo):
-        # Prevent deepcopy of the entire instance if it contains non-pickleable objects
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            if hasattr(v, '__deepcopy__'):
-                setattr(result, k, copy.deepcopy(v, memo))
-            else:
-                setattr(result, k, v)
-        return result
-
 
 def set_generator(generator):
     _Generator(generator=generator)
@@ -38,10 +26,7 @@ def set_generator(generator):
 
 def get_generator():
     assert _Generator._initialized, "Generator has to be initialized"
-    try:
-        return copy.deepcopy(_Generator._instance)
-    except TypeError:
-        return copy.copy(_Generator._instance)
+    return copy.deepcopy(_Generator._instance)
 
 
 def LMU_get_ollama_generator(model=None, use_chat=False):
@@ -80,8 +65,7 @@ def LMU_get_ollama_generator(model=None, use_chat=False):
         )
 
 
-def LMU_get_openai_generator(model):
+def LMU_get_openai_generator(model, api_key):
     from haystack.components.generators import OpenAIGenerator
-    from haystack.utils import Secret
 
-    return OpenAIGenerator(Secret.from_env_var("OPENAI_API_KEY") ,model=model)
+    return OpenAIGenerator(model=model, api_key=api_key)
