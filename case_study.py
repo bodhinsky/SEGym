@@ -31,14 +31,15 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s:%(message)s",
     level=logging.INFO,
     datefmt="%I:%M:%S",
-    handlers=[logging.FileHandler("se_gym.log"), logging.StreamHandler()],
+    handlers=[
+        logging.FileHandler("se_gym.log"),
+        # logging.StreamHandler(),
+    ],
 )
 
-logging.getLogger("caller").setLevel(level=logging.DEBUG)
-logging.getLogger("dockerconnector").setLevel(level=logging.DEBUG)
-logging.getLogger("genetic").setLevel(level=logging.DEBUG)
-logging.getLogger("output_schema").setLevel(level=logging.DEBUG)
-logging.getLogger("utils").setLevel(level=logging.DEBUG)
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 # Multiple initial prompts, as we are using a genetic algorithm
 INITIAL_θ = [
@@ -55,10 +56,10 @@ INITIAL_θ = [
 ]
 
 # Define model name and version
-se_gym.config.MODEL_NAME = "gpt-4o-mini"  # model name to use for code generation
-se_gym.config.EVO_MODEL_NAME = "gpt-4o-mini"  # model name to use for evolution
+se_gym.config.MODEL_NAME = "llama3.1:8b"  # model name to use for code generation
+se_gym.config.EVO_MODEL_NAME = "llama3.1:8b"  # model name to use for evolution
 
-se_gym.set_client(se_gym.openai_client.get_openai_client())  # initialize the singleton client
+se_gym.set_client(se_gym.openai_client.get_lmu_openai_client())  # initialize the singleton client
 se_gym.set_generator(
     se_gym.generator_singleton.LMU_get_openai_generator(model=se_gym.config.MODEL_NAME)
 )  # initialize the singleton client
