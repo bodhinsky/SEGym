@@ -61,7 +61,7 @@ se_gym.config.EVO_MODEL_NAME = "llama3.1:8b"  # model name to use for evolution
 
 se_gym.set_client(se_gym.openai_client.get_lmu_openai_client())  # initialize the singleton client
 se_gym.set_generator(
-    se_gym.generator_singleton.LMU_get_openai_generator(model=se_gym.config.MODEL_NAME)
+    se_gym.generator_singleton.LMU_get_ollama_generator()
 )  # initialize the singleton client
 
 percent_elite = 0.3

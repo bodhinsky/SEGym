@@ -13,6 +13,7 @@ from . import genetic
 from . import config
 from . import observe
 from . import output_validator
+from . import openai_client
 from . import runner_docker
 from . import runner_host
 from .sampler2 import Sampler
