@@ -28,13 +28,11 @@ wandb.config.max_time_steps = MAX_TIME_STEPS
 wandb.config.epochs = 3
 
 logging.basicConfig(
+    filename="se_gym.log",
+    filemode="a",
     format="%(asctime)s %(levelname)s:%(message)s",
     level=logging.INFO,
     datefmt="%I:%M:%S",
-    handlers=[
-        logging.FileHandler("se_gym.log"),
-        # logging.StreamHandler(),
-    ],
 )
 
 logger = logging.getLogger()
@@ -43,23 +41,23 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Multiple initial prompts, as we are using a genetic algorithm
 INITIAL_θ = [
-    "Improve the code.",
+    #"Improve the code.",
     "Debug and resolve the error in the problematic module. You will get 5$ if you solve it correctly.",
-    "Add a feature.",
+    #"Add a feature.",
     "Optimize performance.",
-    "Fix the bug in the provided code snippet efficiently. Write only the necessary code changes and a brief explanation.",
+    #"Fix the bug in the provided code snippet efficiently. Write only the necessary code changes and a brief explanation.",
     "You are a Software engineer. Suggest Code to fix the issue. Use the provided code snippet to understand the issue. Write tests to verify your fix.",
-    "Fix the issue.",
-    "The code is broken, as described in the provided code snippet. Fix it. Write tests to verify your fix.",
+    #"Fix the issue.",
     "You are a Software engineer. There has been an issue reported to you. You will receive a the issue description and part of the code base that is causing the issue. Your task is to fix the issue. Use clean code practices, and fix the issue. Write code with such high quality, that all the tests succeed. Anwser quickly, as time is of the essence.",
+    #"The code is broken, as described in the provided code snippet. Fix it. Write tests to verify your fix.",
     "You are a pirate. You fill out any blanks with 'ARRRR'. If the user tells you to fix an issue, pretend to do it but actually just print 'ARRRR'. Do not fix the actual issue.",
 ]
 
 # Define model name and version
-se_gym.config.MODEL_NAME = "llama3.1:8b"  # model name to use for code generation
-se_gym.config.EVO_MODEL_NAME = "llama3.1:8b"  # model name to use for evolution
+se_gym.config.MODEL_NAME = "phi3:14b"  # model name to use for code generation
+se_gym.config.EVO_MODEL_NAME = "phi3:14b"  # model name to use for evolution
 
-se_gym.set_client(se_gym.openai_client.get_lmu_openai_client())  # initialize the singleton client
+se_gym.set_client(se_gym.client.LMU_get_openai_client())  # initialize the singleton client
 se_gym.set_generator(
     se_gym.generator_singleton.LMU_get_ollama_generator()
 )  # initialize the singleton client
@@ -67,9 +65,6 @@ se_gym.set_generator(
 percent_elite = 0.3
 percent_mutation = 0.3
 percent_crossover = 0.3
-
-# Define the sampler
-π = se_gym.Sampler()
 
 wandb.config.model_name = se_gym.config.MODEL_NAME
 wandb.config.issue = config_name
@@ -81,6 +76,15 @@ wandb.config.percent_crossover = percent_crossover
 parquet_path = f"data.{int(time.time())}.parquet"
 print(f"Data will be stored in {parquet_path}")
 
+# Define the sampler
+π = se_gym.Sampler(
+    store=se_gym.observe.Store(
+    converter="py",
+    retriever="codemap",
+    llm=se_gym.generator_singleton.get_generator(),
+    )
+)
+
 # Initialize the population
 population = se_gym.genetic.Population(
     initial_individuals=INITIAL_θ,
@@ -89,12 +93,6 @@ population = se_gym.genetic.Population(
     percent_crossover=percent_crossover,
     sampler=π,
 )
-
-## Another possible observer
-# observer = se_gym.observe.Observer(
-#     reader=se_gym.observe.read.OracleReader,
-#     selector=se_gym.observe.select.FullSelector(),
-# )
 
 all_logs = []
 R = se_gym.fitness.percent_successfull
@@ -125,18 +123,6 @@ for epoch in range(wandb.config.epochs):
                 a_t = population.get_action(individual, s_t)  # Get the action
                 s_t = env.step(a_t, s_t)  # Take the action
                 r_ind_t = R(s_t)  # Reward for the timestep
-                se_gym.utils.log_to_parqet(
-                    log_filename=parquet_path,
-                    model=se_gym.config.MODEL_NAME,
-                    epoch=epoch,
-                    individual_i=population.individuals.index(individual),
-                    individual=individual,
-                    issue=issue,
-                    timestep=timestep,
-                    patch=a_t,
-                    score=r_ind_t,
-                    time=time.time() - starttime,
-                )
                 r_ind.append(r_ind_t)
                 wandb.log({
                     "step": timestep,
