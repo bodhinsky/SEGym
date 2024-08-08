@@ -13,7 +13,7 @@ temp*file.patch
 .cache.*.pkl
 .DS_Store
 
-logs-wandb/
+wandb/
 data*.parquet
 
 .aider*
