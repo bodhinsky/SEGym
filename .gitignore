@@ -11,9 +11,6 @@ temp/
 old_*
 temp*file.patch
 .cache.*.pkl
-.DS_Store
-
-wandb/
 data*.parquet
 
 .aider*
