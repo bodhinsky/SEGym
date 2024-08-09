@@ -12,7 +12,7 @@ from . import runner_host
 from . import runner_docker
 
 random.seed(15)
-logger = logging.getLogger("api")
+logger = logging.getLogger(__name__)
 __all__ = ["make"]
 
 if not os.path.exists(config.DEFAULT_SAVE_PATH):
@@ -23,75 +23,11 @@ def make(dataset: str = "princeton-nlp/SWE-bench_Lite_oracle/dev"):
     return Environment(get_ds(dataset))
 
 
-__dummy_repo = dict(
-    repo=["gstenzel/ignore-this-dummy"],
-    instance_id=["1"],
-    base_commit=["f0ab435cd075b670f311940edf6210dcbb3c745e"],
-    problem_statement=[
-        "The magic.main.invert_string function should reverse any string passed to it. But it doesn't. Please fix it."
-    ],
-    environment_setup_commit=["f0ab435cd075b670f311940edf6210dcbb3c745e"],
-    test_patch=["[]"],
-    text=[
-        "Context\n...\n[start of magic/main.py]\n...\n[end of magic/main.py]\n...\n[start of magic/__init__.py]\n...\n[end of magic/__init__.py][start of magic/test/test_main.py]\n...\n[end of magic/test/test_main.py]\n...\nContext\n...\n"
-    ],
-    FAIL_TO_PASS=[
-        "['test_string_inversion_1 (test.test_main.test_string_inversion_1)', 'test_string_inversion_2 (test.test_main.test_string_inversion_1)']"
-    ],
-)
-
-__apicurl = dict(
-    repo = ["bodhinsky/apicurl"],
-    instance_id =  ["1"],
-    base_commit  = ["b65489e8f75a1b2a21b6fc1a3c53ddef144e0940"],
-    problem_statement = [
-        "The tests are failing, because we want to calculate percentage of releases owned per artist and Implement data visualization for artist release percentage. We already proposed some tests, so we need to implement according to them"
-    ],
-    environment_setup_commit = ["b65489e8f75a1b2a21b6fc1a3c53ddef144e0940"],
-    test_patch = ["[]"],
-    FAIL_TO_PASS = [
-        "['test_calculate_artist_release_percentage (test.fetch_process_collection_test.test_calculate_artist_release_percentage)','test_visualize_music_collection (test.fetch_process_collection_test.test_visualize_artist_release_percentage)','test_update_data_model_and_storage (test.fetch_process_collection_test.test_update_data_model_and_storage)','test_enhance_ui_with_visualization_and_enriched_data (test.fetch_process_collection_test.test_enhance_ui_with_artist_release_percentage_visualization)','test_secure_api_communication (test.fetch_process_collection_test.test_secure_api_communication)','test_optimize_performance_for_fetching_processing_visualization (test.fetch_process_collection_test.test_optimize_performance_for_data_processing_and_visualization)']"
-    ],
-)
-
-__swelitemarshmallow1 = dict(
-    repo = ["marshmallow-code/marshmallow"],
-    instance_id = ["marshmallow-code__marshmallow-1359"],
-    base_commit = ["b40a0f4e33823e6d0f341f7e8684e359a99060d1"],
-    problem_statement = [
-        "3.0: DateTime fields cannot be used as inner field for List or Tuple fields Between releases 3.0.0rc8 and 3.0.0rc9, `DateTime` fields have started throwing an error when being instantiated as inner fields of container fields like `List` or `Tuple`. The snippet below works in <=3.0.0rc8 and throws the error below in >=3.0.0rc9 (and, worryingly, 3.0.0): ```python from marshmallow import fields, Schema class MySchema(Schema): times = fields.List(fields.DateTime()) s = MySchema() ``` Traceback: ``` Traceback (most recent call last): File 'test-mm.py', line 8, in <module> s = MySchema() File '/Users/victor/.pyenv/versions/marshmallow/lib/python3.6/site-packages/marshmallow/schema.py', line 383, in __init__ self.fields = self._init_fields() File '/Users/victor/.pyenv/versions/marshmallow/lib/python3.6/site-packages/marshmallow/schema.py', line 913, in _init_fields self._bind_field(field_name, field_obj) File '/Users/victor/.pyenv/versions/marshmallow/lib/python3.6/site-packages/marshmallow/schema.py', line 969, in _bind_field field_obj._bind_to_schema(field_name, self) File '/Users/victor/.pyenv/versions/marshmallow/lib/python3.6/site-packages/marshmallow/fields.py', line 636, in _bind_to_schema self.inner._bind_to_schema(field_name, self) File '/Users/victor/.pyenv/versions/marshmallow/lib/python3.6/site-packages/marshmallow/fields.py', line 1117, in _bind_to_schema or getattr(schema.opts, self.SCHEMA_OPTS_VAR_NAME) AttributeError: 'List' object has no attribute 'opts' ``` It seems like it's treating the parent field as a Schema without checking that it is indeed a schema, so the `schema.opts` statement fails as fields don't have an `opts` attribute."
-    ],
-    environment_setup_commit = ["b40a0f4e33823e6d0f341f7e8684e359a99060d1"],
-    test_patch = ["[]"],
-    FAIL_TO_PASS  = [
-        "['test_datetime_list_inner_format (tests.test_fields.test_datetime_list_inner_format)']"
-    ]
-)
-
-__swelitepylint1 = dict(
-    repo = ["pylint-dev/astroid"],
-    instance_id = ["pylint-dev__astroid-1978"],
-    base_commit = ["0c9ab0fe56703fa83c73e514a1020d398d23fa7f"],
-    problem_statement = [
-        "Deprecation warnings from numpy ### Steps to reproduce 1. Run pylint over the following test case: ``` '''Test case''' import numpy as np value = np.random.seed(1234) ``` ### Current behavior ``` /home/bje/source/nemo/myenv/lib/python3.10/site-packages/astroid/raw_building.py:470: FutureWarning: In the future `np.long` will be defined as the corresponding NumPy scalar. (This may have returned Python scalars in past versions. getattr(sys.modules[modname], name) /home/bje/source/nemo/myenv/lib/python3.10/site-packages/astroid/raw_building.py:470: FutureWarning: In the future `np.long` will be defined as the corresponding NumPy scalar. (This may have returned Python scalars in past versions. getattr(sys.modules[modname], name) ``` ### Expected behavior There should be no future warnings. ### python -c 'from astroid import __pkginfo__; print(__pkginfo__.version)' output 2.12.13"
-    ],
-    environment_setup_commit = ["0c9ab0fe56703fa83c73e514a1020d398d23fa7f"],
-    test_patch = ["[]"],
-    FAIL_TO_PASS  = [
-        "['test_build_module_getattr_catch_output (tests.unittest_raw_building.test_build_module_getattr_catch_output)']"
-    ]
-)
-
 def get_ds(dataset):
     if dataset == "dummy":
         import json
 
         with open("./dummy_dataset.json", "r") as f:
-            return json.load(f)
-    if dataset == "apicurl":
-        import json
-
-        with open("./apicurl.json", "r") as f:
             return json.load(f)
     else:
         import datasets
