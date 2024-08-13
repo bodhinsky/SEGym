@@ -29,6 +29,11 @@ def get_ds(dataset):
 
         with open("./dummy_dataset.json", "r") as f:
             return json.load(f)
+    if dataset == "apicurl":
+        import json
+
+        with open("./apicurl.json", "r") as f:
+            return json.load(f)
     else:
         import datasets
 

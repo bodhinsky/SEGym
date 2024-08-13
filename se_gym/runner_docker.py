@@ -78,7 +78,7 @@ class DockerConnector:
             install_command = []
         install_commands = "\n".join(install_command)
         dockerfile_str = f"""
-FROM python:3.12-alpine
+FROM python:3.11-alpine
 RUN apk add --no-cache git nano
 RUN git clone https://github.com/{repo}.git repo
 WORKDIR repo
