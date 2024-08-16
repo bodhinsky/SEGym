@@ -93,7 +93,7 @@ RUN git clone https://github.com/{repo}.git repo
 WORKDIR repo
 RUN git checkout {environment_setup_commit}
 {install_commands}
-RUN pip install pytest
+RUN pip install pytest seaborn python-dotenv
 """
         return dockerfile_str
 

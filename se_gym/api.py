@@ -132,11 +132,13 @@ class Environment:
             repo=self.current_repo,
             environment_setup_commit=self.current_commit,
         )
+        print("APPLYING PATCH:")
         for patch in state.previous_patches:
             if patch and patch != "[]":
                 self.dockerconnector.apply_patch(container, patch=patch)
         self.dockerconnector.apply_patch(container, patch=action)
         log = self.dockerconnector.run_tests(container)
+        print(f"PATCH APPLIED: {log}")
         container.kill()
         new_state = copy.deepcopy(state)
         if new_state.logs:
