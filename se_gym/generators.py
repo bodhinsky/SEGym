@@ -79,7 +79,7 @@ class CustomGenerator:
         schema = schema or self.schema
 
         if schema is not None:
-            rf = dict(response_format={"type": "json_object", "schema": schema.model_json_schema()})
+            rf = dict(response_format={"type": "json_schema", "json_schema": {"name": "segym1", "schema": schema.model_json_schema()}})
         else:
             rf = dict()
 

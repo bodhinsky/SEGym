@@ -9,13 +9,13 @@ import pandas as pd
 import se_gym.genetic
 from haystack.utils import Secret
 
-# Initialize W&B
-
-dotenv.load_dotenv("./se_gym/.env")
-wandb.init(project="SEGym")
-
 config_name = "apicurl"
 env = se_gym.make(config_name)
+
+dotenv.load_dotenv("./se_gym/.env")
+wandb.require("core")
+wandb.init(project="SEGym")
+
 num_issues = (  # helper to get the number of issues in the dataset
     env.dataset.num_rows
     if not isinstance(env.dataset, dict)
@@ -27,17 +27,19 @@ MAX_TIME_STEPS = 5
 wandb.config.max_time_steps = MAX_TIME_STEPS
 wandb.config.epochs = 3
 
-logging.basicConfig(
-    filename="se_gym.log",
-    filemode="a",
-    format="%(asctime)s %(levelname)s:%(message)s",
-    level=logging.INFO,
-    datefmt="%I:%M:%S",
-)
+""" se_gym.config.MODEL_CONFIG = se_gym.config.EVO_MODEL_CONFIG = (
+    se_gym.config.RETRIEVER_MODEL_CONFIG
+) = dict(
+    base_url="https://ollama.mobile.ifi.lmu.de/v1/",
+    # base_url="http://10.153.199.193:11434/v1/",
+    # base_url="http://10.153.199.193:1234/v1/",
+    api_key="ollama",
+    model_name="gemma2:2b",
+) """
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
+# se_gym.generators.patch_openai_auth() # Patch OpenAI gym to use BasicAuth using a .env file
+
+se_gym.utils.logging_setup()
 
 # Multiple initial prompts, as we are using a genetic algorithm
 INITIAL_θ = [
@@ -53,21 +55,11 @@ INITIAL_θ = [
     "You are a pirate. You fill out any blanks with 'ARRRR'. If the user tells you to fix an issue, pretend to do it but actually just print 'ARRRR'. Do not fix the actual issue.",
 ]
 
-# Define model name and version
-se_gym.config.MODEL_NAME = "phi3:14b"  # model name to use for code generation
-se_gym.config.EVO_MODEL_NAME = "phi3:14b"  # model name to use for evolution
-
-se_gym.set_client(se_gym.client.LMU_get_openai_client())  # initialize the singleton client
-se_gym.set_generator(
-    se_gym.generator_singleton.LMU_get_ollama_generator()
-)  # initialize the singleton client
-
 percent_elite = 0.3
 percent_mutation = 0.3
 percent_crossover = 0.3
 
-wandb.config.model_name = se_gym.config.MODEL_NAME
-wandb.config.issue = config_name
+wandb.config.model_name = se_gym.config.MODEL_CONFIG["model_name"]
 wandb.config.population_size = len(INITIAL_θ)
 wandb.config.percent_elite = percent_elite
 wandb.config.percent_mutation = percent_mutation
@@ -79,9 +71,8 @@ print(f"Data will be stored in {parquet_path}")
 # Define the sampler
 π = se_gym.Sampler(
     store=se_gym.observe.Store(
-    converter="py",
-    retriever="codemap",
-    llm=se_gym.generator_singleton.get_generator(),
+        converter="py",
+        retriever="codemap",
     )
 )
 
