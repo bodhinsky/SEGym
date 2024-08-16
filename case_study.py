@@ -27,6 +27,10 @@ MAX_TIME_STEPS = 5
 wandb.config.max_time_steps = MAX_TIME_STEPS
 wandb.config.epochs = 3
 
+se_gym.config.MODEL_CONFIG["api_key"] = os.getenv("OPENAI_API_KEY")
+se_gym.config.EVO_MODEL_CONFIG["api_key"] = os.getenv("OPENAI_API_KEY")
+se_gym.config.RETRIEVER_MODEL_CONFIG["api_key"] = os.getenv("OPENAI_API_KEY")
+
 """ se_gym.config.MODEL_CONFIG = se_gym.config.EVO_MODEL_CONFIG = (
     se_gym.config.RETRIEVER_MODEL_CONFIG
 ) = dict(
