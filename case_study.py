@@ -122,17 +122,7 @@ for epoch in range(wandb.config.epochs):
                     "individual": population.individuals.index(individual)+1,
                 }, commit=False)
 
-                step_log = {
-                    "epoch": epoch,
-                    "issue": issue,
-                    "individual": individual,
-                    "step": timestep,
-                    "score": r_ind_t,
-                    "patch": a_t,
-                }
-                individual_log["steps"].append(step_log)
-                all_logs.append(step_log)  # Add to the main log list
-
+                se_gym.utils.log_to_parqet(log_filename=parquet_path,model=se_gym.config.MODEL_CONFIG["model_name"],epoch=epoch,individual_i=population.individuals.index(individual),individual=individual,issue=issue,timestep=timestep,patch=a_t,score=r_ind_t,time=time.time()-starttime)
                 if r_ind_t == 1:  # If the reward is 1, the issue is fixed
                     print(f"\t\t\t\tIssue fixed in {timestep} timesteps")
                     wandb.log({"issue_fixed": True})
@@ -144,9 +134,6 @@ for epoch in range(wandb.config.epochs):
             rewards.append(r_ind)
         epoch_loss.append(rewards)
         # Evolve the population based on the rewards
-
-        df = pd.DataFrame(all_logs)
-        csv_file = f"evolution_logs_{epoch}_{issue}.csv"
         
         # Commit logs after processing all individuals for the current issue
         wandb.log({"epoch": epoch, "issue": issue}, commit=True)
@@ -154,16 +141,5 @@ for epoch in range(wandb.config.epochs):
     # change epoch_loss from [epoch, individual, timestep] to [individual, epoch, timestep]
     epoch_loss = list(map(list, zip(*epoch_loss)))
     population.evolve(epoch_loss)
-    df = pd.DataFrame(all_logs)
-    csv_file = f"evolution_logs_{epoch}.csv"
-    df.to_csv(csv_file, index=False)
-    print(f"Logs saved to {csv_file}")
 
-# Convert all logs to a DataFrame
-df = pd.DataFrame(all_logs)
-
-# Save the DataFrame to a CSV file
-csv_file = "evolution_logs.csv"
-df.to_csv(csv_file, index=False)
-print(f"Logs saved to {csv_file}")
 wandb.finish()
