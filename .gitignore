@@ -12,6 +12,8 @@ old_*
 temp*file.patch
 .cache.*.pkl
 data*.parquet
+wandb/
+.DS_Store
 
 .aider*
 !.aider.conf.yml

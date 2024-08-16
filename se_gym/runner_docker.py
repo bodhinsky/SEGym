@@ -79,7 +79,16 @@ class DockerConnector:
         install_commands = "\n".join(install_command)
         dockerfile_str = f"""
 FROM python:3.11-alpine
-RUN apk add --no-cache git nano
+RUN apk update && apk add --no-cache \
+    git \
+    nano \
+    build-base \
+    gcc \
+    g++ \
+    libffi-dev \
+    musl-dev \
+    linux-headers \
+    python3-dev
 RUN git clone https://github.com/{repo}.git repo
 WORKDIR repo
 RUN git checkout {environment_setup_commit}
