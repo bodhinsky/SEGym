@@ -87,7 +87,7 @@ class CustomGenerator:
                 rf = dict(
                     response_format={
                         "type": "json_schema",
-                        "json_schema": {"schema": schema.model_json_schema()},
+                        "json_schema": {"name": "segym1", "schema": schema.model_json_schema()},
                     }
                 )
         else:
