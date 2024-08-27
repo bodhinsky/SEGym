@@ -51,34 +51,28 @@ dummy1 = {
     ],
 }
 
-apicurl = {
-    "instance_id": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5"
-    ],
+dummy2 = {
+    "instance_id": ["1", "2", "3", "4", "5"],
     "base_commit": [
         "ccc3d719a0bd5e5564e6faf4d3d87d6d35c8ed7c",
         "cac6fa0bb7d58bd9e99b26e506b3c48be34449c0",
         "1a469461d1ed6c58ce0dfba48e7b93e31b7817aa",
         "f2df51fee8d338c6d718f015f3fddd2c52024a58",
-        "d8f0050fa18a478c2a4509fe4099dbbccc9dbc6f"
+        "d8f0050fa18a478c2a4509fe4099dbbccc9dbc6f",
     ],
     "environment_setup_commit": [
         "ccc3d719a0bd5e5564e6faf4d3d87d6d35c8ed7c",
         "cac6fa0bb7d58bd9e99b26e506b3c48be34449c0",
         "1a469461d1ed6c58ce0dfba48e7b93e31b7817aa",
         "f2df51fee8d338c6d718f015f3fddd2c52024a58",
-        "d8f0050fa18a478c2a4509fe4099dbbccc9dbc6f"
+        "d8f0050fa18a478c2a4509fe4099dbbccc9dbc6f",
     ],
     "problem_statement": [
         "The existing code fetches the collection each time the code is called. I've added the function save_collection_to_json, so it stores the collection as a JSON in the path specified, but it does not store anything as of now. Fix the implementation of the function.",
         "save_collection_to_json overwrites the file, if it already exists. Firstly I wanted to check if the collection given has valid syntax, then check for the file and if present, check when it was created. When the file is not older than 24 hours, load the collection from the json file. Additionally, let the function return True if the file was changed, False otherwise.",
         "For now, the collection data is only fetched and stored. My function called split_artist_release_percentage is not properly working as of now. It should return a dataframe containing the top artists in the collection with their percentage and the rest of the artists with their accumulated percentage",
         "We have the function visualize_artist_release_percentage in place, which should visualize the top_k_artists in a pie chart using mathplotlib. As if now, this is not working and returning errors",
-        "Fix the function called list_artist_releases which should print all releases in the collection in a table view if no artist is specified. If an artist is specified, then only print the releases by this artist."
+        "Fix the function called list_artist_releases which should print all releases in the collection in a table view if no artist is specified. If an artist is specified, then only print the releases by this artist.",
     ],
     "FAIL_TO_PASS": [
         "['test_save_collection_to_json (test.test_fetch_process_collection.test_save_collection_to_json)', 'test_save_collection_to_json_nested (test.test_fetch_process_collection.test_save_collection_to_json_nested)', 'test_save_collection_to_json_empty (test.test_fetch_process_collection.test_save_collection_to_json_empty)', 'test_save_collection_to_json_file_error (test.test_fetch_process_collection.test_save_collection_to_json_file_error)', 'test_save_collection_to_json_invalid_json (test.test_fetch_process_collection.test_save_collection_to_json_invalid_json)']",
@@ -106,6 +100,6 @@ apicurl = {
         "Context\n...\n[start of main.py]\n...\n[end of main.py]\n...\n[start of apicurl/fetch_process_collection.py]\n...\n[end of apicurl/fetch_process_collection.py][start of test/test_fetch_process_collection.py]\n...\n[end of test/test_fetch_process_collection.py]\n...\nContext\n...\n",
         "Context\n...\n[start of main.py]\n...\n[end of main.py]\n...\n[start of apicurl/fetch_process_collection.py]\n...\n[end of apicurl/fetch_process_collection.py][start of test/test_fetch_process_collection.py]\n...\n[end of test/test_fetch_process_collection.py]\n...\nContext\n...\n",
         "Context\n...\n[start of main.py]\n...\n[end of main.py]\n...\n[start of apicurl/fetch_process_collection.py]\n...\n[end of apicurl/fetch_process_collection.py][start of test/test_fetch_process_collection.py]\n...\n[end of test/test_fetch_process_collection.py]\n...\nContext\n...\n",
-        "Context\n...\n[start of main.py]\n...\n[end of main.py]\n...\n[start of apicurl/fetch_process_collection.py]\n...\n[end of apicurl/fetch_process_collection.py][start of test/test_fetch_process_collection.py]\n...\n[end of test/test_fetch_process_collection.py]\n...\nContext\n...\n"
-    ]
+        "Context\n...\n[start of main.py]\n...\n[end of main.py]\n...\n[start of apicurl/fetch_process_collection.py]\n...\n[end of apicurl/fetch_process_collection.py][start of test/test_fetch_process_collection.py]\n...\n[end of test/test_fetch_process_collection.py]\n...\nContext\n...\n",
+    ],
 }
