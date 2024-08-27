@@ -25,23 +25,25 @@ num_issues = (  # helper to get the number of issues in the dataset
 # Configuration
 MAX_TIME_STEPS = 5
 wandb.config.max_time_steps = MAX_TIME_STEPS
-wandb.config.epochs = 3
+wandb.config.epochs = 5
 
 se_gym.config.MODEL_CONFIG["api_key"] = os.getenv("OPENAI_API_KEY")
 se_gym.config.EVO_MODEL_CONFIG["api_key"] = os.getenv("OPENAI_API_KEY")
 se_gym.config.RETRIEVER_MODEL_CONFIG["api_key"] = os.getenv("OPENAI_API_KEY")
 
-""" se_gym.config.MODEL_CONFIG = se_gym.config.EVO_MODEL_CONFIG = (
+""" se_gym.config.LLAMACPP_COMPATIBLE_SCHEMA = True
+
+se_gym.config.MODEL_CONFIG = se_gym.config.EVO_MODEL_CONFIG = (
     se_gym.config.RETRIEVER_MODEL_CONFIG
 ) = dict(
     base_url="https://ollama.mobile.ifi.lmu.de/v1/",
     # base_url="http://10.153.199.193:11434/v1/",
     # base_url="http://10.153.199.193:1234/v1/",
     api_key="ollama",
-    model_name="gemma2:2b",
-) """
+    model_name="phi3:14b",
+) 
 
-# se_gym.generators.patch_openai_auth() # Patch OpenAI gym to use BasicAuth using a .env file
+se_gym.generators.patch_openai_auth() # Patch OpenAI gym to use BasicAuth using a .env file """
 
 se_gym.utils.logging_setup()
 
@@ -53,15 +55,15 @@ INITIAL_θ = [
     "Optimize performance.",
     #"Fix the bug in the provided code snippet efficiently. Write only the necessary code changes and a brief explanation.",
     "You are a Software engineer. Suggest Code to fix the issue. Use the provided code snippet to understand the issue. Write tests to verify your fix.",
-    #"Fix the issue.",
+    #"Repair the issue.",
     "You are a Software engineer. There has been an issue reported to you. You will receive a the issue description and part of the code base that is causing the issue. Your task is to fix the issue. Use clean code practices, and fix the issue. Write code with such high quality, that all the tests succeed. Anwser quickly, as time is of the essence.",
     #"The code is broken, as described in the provided code snippet. Fix it. Write tests to verify your fix.",
     "You are a pirate. You fill out any blanks with 'ARRRR'. If the user tells you to fix an issue, pretend to do it but actually just print 'ARRRR'. Do not fix the actual issue.",
 ]
 
-percent_elite = 0.3
-percent_mutation = 0.3
-percent_crossover = 0.3
+percent_elite = 0.2
+percent_mutation = 0.2
+percent_crossover = 0.4
 
 wandb.config.model_name = se_gym.config.MODEL_CONFIG["model_name"]
 wandb.config.population_size = len(INITIAL_θ)
