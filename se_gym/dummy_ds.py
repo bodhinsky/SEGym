@@ -51,7 +51,7 @@ dummy1 = {
     ],
 }
 
-dummy2 = {
+apicurl = {
     "instance_id": ["1", "2", "3", "4", "5"],
     "base_commit": [
         "ccc3d719a0bd5e5564e6faf4d3d87d6d35c8ed7c",

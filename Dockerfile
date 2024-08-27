@@ -9,7 +9,6 @@ RUN apk update && apk add --no-cache \
     musl-dev \
     linux-headers \
     python3-dev
-RUN chmod 
 RUN git clone https://github.com/bodhinsky/apicurl.git repo
 WORKDIR repo
 RUN git checkout b84fc67c113d76588c80406cb4b3b54b52b16f21
