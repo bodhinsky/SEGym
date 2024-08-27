@@ -1,0 +1,23 @@
+{
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "se_gym"
+    ],
+    "editor.smoothScrolling": true,
+    "editor.minimap.autohide": true,
+    "python.languageServer": "Pylance",
+    "ruff.showNotifications": "onError",
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.formatOnType": true,
+        "editor.wordBasedSuggestions": "off",
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "python.analysis.include": [
+        "${workspaceFolder}/se_gym"
+    ],
+    "python.analysis.exclude": [
+        "${workspaceFolder}/.venv", "**/*cache*"
+    ]
+}
