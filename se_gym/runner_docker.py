@@ -93,7 +93,7 @@ RUN git clone https://github.com/{repo}.git repo
 WORKDIR repo
 RUN git checkout {environment_setup_commit}
 {install_commands}
-RUN pip install pytest seaborn python-dotenv
+RUN pip install pytest seaborn python-dotenv freezegun
 """
         return dockerfile_str
 
@@ -161,7 +161,7 @@ RUN pip install pytest seaborn python-dotenv
         tarstream.seek(0)
         assert container.put_archive("/repo", tarstream), "Failed to copy patch to container"
         apply_log = container.exec_run(
-            "git apply file.patch --ignore-space-change --ignore-whitespace --verbose --recount --inaccurate-eof",
+            "git apply --ignore-space-change --ignore-whitespace --verbose --recount --inaccurate-eof file.patch",
             workdir="/repo",
         )
         if apply_log.exit_code != 0:
